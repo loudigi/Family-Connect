@@ -1,0 +1,126 @@
+﻿@model FamConnect.Models.DashBoardViewModel
+
+@{
+    ViewBag.Title = "Family Connect";
+    var familyImage = "";
+    var familyName = "";
+    var familyGoal = 0;
+    var familyTotal = 0;
+    decimal familyTotalProgress = 0;
+}
+
+@*Find the users family image and name in the db.*@
+@foreach (var family in Model.Families)
+{
+    if (family.Id == Model.FamilyID)
+
+    {
+        familyImage = family.PathToFamilyPicture;
+        familyName = family.FamilyName;
+    }
+}
+
+@foreach (var milestone in Model.Milestones)
+{
+    if (milestone.UserId == Model.FamilyID)
+    {
+        familyGoal = milestone.MilestonePointsRequired;
+    }
+
+}
+
+@foreach (var connection in Model.ConnectionActions)
+{
+    if (connection.UserId == Model.FamilyID)
+    {
+        familyTotal += connection.PointsEarned;
+    }
+}
+
+@*Convert total family points to decimal to use as percentage of overall milestone goal.*@
+@{
+    familyTotalProgress = Convert.ToDecimal(familyTotal) / familyGoal * 100;
+}
+
+@*Milstone reached alert*@
+@if (familyTotal == familyGoal)
+{
+    <div class="alert alert-info alert-dismissible fade in" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">×</span>
+        </button>
+        <h4>Congrats! Your family has achieved a milestone</h4>
+        <p>Take this time to celebrate or to create a new milestone.</p>
+        <p>
+            <a href="@Url.Action("Create", "Milestones")" class="btn btn-primary"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Create Milestone</a>
+            <button type="button" data-dismiss="alert" class="btn btn-default">Maybe Later</button>
+        </p>
+    </div>
+}
+
+
+<div class="row">
+
+    <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9 familyPictureFrame" style="background-image:url(@familyImage)">
+        <div class="familyContent">
+            <h1>@familyName</h1>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3 dashSideNav">
+        <div class="nextReward text-center">
+            <i class="fa fa-trophy" style="font-size:50px"></i>
+            <h3>NEXT REWARD</h3>
+            <h4>@{Html.RenderAction("GetMilestoneReward", "Milestones");}</h4>
+
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="@familyGoal" style="min-width: 2em; width:@familyTotalProgress%;">
+                    <h2>@familyTotal<text>&nbsp;</text>/<text>&nbsp;</text>@{Html.RenderAction("GetMilestoneValue", "Milestones");}</h2>
+                </div>
+            </div>
+
+        </div>
+        <div class="btn-group-vertical btn-group-lg btn-block" role="group" aria-label="...">
+            <a href="@Url.Action("Create", "ConnectionActions")" class="btn btn-primary"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Log Connection</a>
+            <a href="@Url.Action("Index", "FamilyMembers")" class="btn btn-primary"><span class="fa fa-users" aria-hidden="true"></span> Manage Family</a>
+            <a href="@Url.Action("Create", "Milestones")" class="btn btn-primary"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Create Milestone</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="panel panel-primary">
+        <div class="panel-heading"><h4>Recent Connections</h4></div>
+        <div class="panel-body">
+            <table class="table-striped table table-hover">
+                <thead>
+                    <tr>
+                        <th>Connection</th>
+                        <th>Member</th>
+                        <th>Points Earned</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var action in Model.ConnectionActions.Take(5))
+                    {
+                        if (action.UserId == Model.FamilyID)
+                        {
+
+                            <tr>
+                                <td><a href="@Url.Action("Details", "ConnectionActions", new { id = action.ConnectionActionId })">@action.ConnectionActionDescription</a></td>
+                                <td><a href="@Url.Action("Details", "FamilyMembers", new { id = action.FamilyMember.FamilyMemberId })"><img class="img-circle smallProfileImg" src="@action.FamilyMember.PathToMemberPhoto" alt="@action.FamilyMember.FirstName" /></a> @action.FamilyMember.FirstName</td>
+                                <td>@action.PointsEarned</td>
+                                <td>@action.ConnectionActionDate</td>
+                            </tr>
+
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="panel-footer text-left">
+            <a href="@Url.Action("Index", "ConnectionActions")" class="btn btn-primary btn-sm"> View All</a>
+        </div>
+    </div>
+</div>
+
